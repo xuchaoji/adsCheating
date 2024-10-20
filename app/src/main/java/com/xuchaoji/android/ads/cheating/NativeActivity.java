@@ -6,7 +6,10 @@ import android.os.Bundle;
 import android.service.controls.DeviceTypes;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -38,13 +41,29 @@ public class NativeActivity extends AppCompatActivity {
 
     private NativeVideoView adVideoView;
 
+    private float adViewWidth = 984;
+
+    private float adViewHeight = 649;
+
+    private float updateW = adViewWidth;
+
+    private float updateH = adViewHeight;
+    private SeekBar widthSeekBar;
+    private TextView widthTextView;
+
+    private SeekBar heightSeekBar;
+    private TextView heightTextView;
+
+    private SeekBar alphaSeekBar;
+
+    private TextView alphaTextView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_native);
         initAdViews();
         initCheatingParamViews();
-
         loadAd();
     }
 
@@ -69,6 +88,80 @@ public class NativeActivity extends AppCompatActivity {
     }
 
     private void initCheatingParamViews() {
+        widthSeekBar = findViewById(R.id.view_width_seekbar);
+        widthTextView = findViewById(R.id.view_width_tv);
+        widthSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                updateW = adViewWidth * progress / 100;
+                widthTextView.setText("控件宽: " + updateW + " px.");
+                updateAdViewSize();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        heightSeekBar = findViewById(R.id.view_height_seekbar);
+        heightTextView = findViewById(R.id.view_height_tv);
+        heightSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                updateH = adViewHeight * progress / 100;
+                heightTextView.setText("控件高: " + updateH + " px.");
+                updateAdViewSize();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        alphaSeekBar = findViewById(R.id.view_alpha_seekbar);
+        alphaTextView = findViewById(R.id.view_alpha_tv);
+        alphaSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                float alpha = progress / 100f;
+                alphaTextView.setText("透明度" + alpha);
+                if (nativeView != null) {
+                    nativeView.setAlpha(alpha);
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+    }
+
+    private void updateAdViewSize() {
+        if (nativeView == null) {
+            return;
+        }
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams((int) updateW, (int) updateH);
+        params.addRule(RelativeLayout.BELOW, R.id.cheatting_param_container);
+        nativeView.setLayoutParams(params);
     }
 
     private void initAdViews() {
@@ -90,5 +183,12 @@ public class NativeActivity extends AppCompatActivity {
 
         nativeView.register(nativeAd, clickableViews);
         nativeView.register(nativeAd, adVideoView);
+        nativeView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                Log.i(TAG, "onGlobalLayout, w: " + nativeView.getWidth());
+                Log.i(TAG, "onGlobalLayout, h: " + nativeView.getHeight());
+            }
+        });
     }
 }
